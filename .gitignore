@@ -1,0 +1,7 @@
+*py[co]
+
+# data
+*.zip
+
+# Vim
+.*.sw[op]
