@@ -26,6 +26,12 @@ test.processed$Fare[is.na(test.processed$Fare)] <- fare_missing
 test.processed$Survived <- NA
 combined <- rbind(train.processed, test.processed)
 
+combined$Survived=as.factor(combined$Survived)
+combined$Pclass=as.factor(combined$Pclass)
+combined$Name=as.character(combined$Name)
+combined$Ticket=as.character(combined$Ticket)
+combined$Cabin=as.character(combined$Cabin)
+
 table.embarked = table(combined[combined$Embarked!="",]$Embarked)
 combined[combined$Embarked=="",]$Embarked = names(table.embarked)[which.max(table.embarked)]
 
@@ -36,69 +42,46 @@ combined[combined$Embarked=="",]$Embarked = names(table.embarked)[which.max(tabl
 train = combined[combined$PassengerId %in% train$PassengerId,]
 test = combined[combined$PassengerId %in% test$PassengerId,]
 
-formula = Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked
+formula = Survived ~ Pclass + Sex + Age + Fare + Embarked
 
-forest = randomForest(formula, data=train)
+forest = randomForest(formula, data=train, ntree=500)
 test$Survived = predict(forest, newdata=test)
 
-help(formula)
-help(predict.randomForest)
+dict = c('Age'=0,'Embarked'=0,'Fare'=0,'Parch'=0,'Pclass'=0,'Sex'=0,'SibSp'=0)
+
+for (i in 1:500) {
+  tree = getTree(forest, i, labelVar=TRUE)
+  label=tree[1,][,3]
+  dict[label]=dict[label]+1
+}
+
+print(dict)
 
 ##########################
 # Functions for plotting
 ##########################
 
-getConds<-function(tree){
-  conds<-list()
-  id.leafs<-which(tree$status==-1)
-    j<-0
-    for(i in id.leafs){
-    j<-j+1
-    prevConds<-prevCond(tree,i)
-    conds[[j]]<-prevConds$cond
-    while(prevConds$id>1){
-      prevConds<-prevCond(tree,prevConds$id)
-      conds[[j]]<-paste(conds[[j]]," & ",prevConds$cond)
-      if(prevConds$id==1){
-      conds[[j]]<-paste(conds[[j]]," => ",tree$prediction[i])
-        break()
-      }
-    }
+#library("party")
 
-  }
+#cf <- cforest(formula,
+#              data = train,
+#              controls = cforest_control(mtry=2, mincriterion=0)) 
+#plot(cf)
 
-  return(conds)
-}
+#pt <- party:::prettytree(cf@ensemble[[1]], names(cf@data@get("input"))) 
 
-prevCond<-function(tree,i){
-  if(i %in% tree$right_daughter){
-    id<-which(tree$right_daughter==i)
-    cond<-paste(tree$split_var[id],">",tree$split_point[id])
-    }
-    if(i %in% tree$left_daughter){
-    id<-which(tree$left_daughter==i)
-    cond<-paste(tree$split_var[id],"<",tree$split_point[id])
-  }
+#nt <- new("BinaryTree") 
+#nt@tree <- pt 
+#nt@data <- cf@data 
+#nt@responses <- cf@responses 
 
-  return(list(cond=cond,id=id))
-}
-
-collapse<-function(x){
-  x<-sub(" ","_",x)
-
-  return(x)
-}
-
-tree<-getTree(forest, k=1, labelVar=TRUE)
-colnames(tree)<-sapply(colnames(tree),collapse)
-rules<-getConds(tree)
-
-#print(rules)
+#plot(nt) 
 
 ##########################
 # Make a submission file 
 ##########################
 
+print("Write file")
 submit = test[c("PassengerId", "Survived")]
 write.csv(submit, file="data/test_submit.csv", row.names=FALSE)
 
