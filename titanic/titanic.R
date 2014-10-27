@@ -44,7 +44,7 @@ test = combined[combined$PassengerId %in% test$PassengerId,]
 
 formula = Survived ~ Pclass + Sex + Age + Fare + Embarked
 
-forest = randomForest(formula, data=train, ntree=500)
+forest = randomForest(formula, data=train, ntree=500, maxnodes=8)
 test$Survived = predict(forest, newdata=test)
 
 dict = c('Age'=0,'Embarked'=0,'Fare'=0,'Parch'=0,'Pclass'=0,'Sex'=0,'SibSp'=0)
@@ -56,6 +56,7 @@ for (i in 1:500) {
 }
 
 print(dict)
+print(getTree(forest, 1, labelVar=TRUE))
 
 ##########################
 # Functions for plotting
