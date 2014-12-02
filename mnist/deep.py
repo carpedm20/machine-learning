@@ -9,6 +9,32 @@ import pandas as pd
 
 from time import gmtime, strftime
 
+def nudge_dataset(X, Y):
+    """
+    This produces a dataset 5 times bigger than the original one,
+    by moving the 8x8 images in X around by 1px to left, right, down, up
+    """
+    direction_vectors = [
+            [[0, 1, 0], [0, 0, 0], [0, 0, 0]],
+            [[0, 0, 0], [1, 0, 0], [0, 0, 0]],
+            [[0, 0, 0], [0, 0, 1], [0, 0, 0]],
+            [[0, 0, 0], [0, 0, 0], [0, 1, 0]]]
+    shift = lambda x, w: convolve(x.reshape((28, 28)), mode='constant', weights=w).ravel()
+    X = np.concatenate([X] + [np.apply_along_axis(shift, 1, X, vector) for vector in direction_vectors])
+    Y = np.concatenate([Y for _ in range(5)], axis=0)
+    return X, Y
+
+def rotate_dataset(X,Y):
+    XX = np.zeros(X.shape)
+    for index in range(X.shape[0]):
+        angle = np.random.randint(-7,7)
+        XX[index,:] = nd.rotate(np.reshape(X[index,:],((28,28))),angle,reshape=False).ravel()
+
+    X = np.vstack((X,XX))
+    Y = np.hstack((Y,Y))
+
+    return X, Y
+
 train = pd.read_csv("train.csv")
 test = pd.read_csv("test.csv")
 
@@ -16,6 +42,9 @@ train_d = np.asarray(train.loc[:,'pixel0':].values/ 255.0, 'float32')
 test_d = np.asarray(test.values / 255.0, 'float32')
 
 train_l = train['label'].values
+
+train_d, train_l = nudge_dataset(train_d, train_l)
+train_d, train_l = rotate_dataset(train_d, train_l)
 
 clf = DBN([train_d.shape[1], 350, 10],
           learn_rates=0.3,

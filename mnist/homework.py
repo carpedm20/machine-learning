@@ -45,5 +45,19 @@ from operator import itemgetter
 sorted_avg = sorted(avg_w_idx, key=itemgetter(1))
 sorted_avg.reverse()
 
-for x in sorted_avg[:5]:
+tops = []
+
+for x in sorted_avg:
     print x[0], "\t", x[1]
+    tops.append(x[0])
+
+w=clf.net_.weights[0].as_numpy_array()
+
+print w[:,30].shape
+
+for i in tops[:5]:
+    k = w[:,i]
+    l = k.reshape((28,28))
+    
+    plt.imshow(l, interpolation='nearest')
+    plt.show()
