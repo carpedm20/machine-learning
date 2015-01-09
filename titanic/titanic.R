@@ -32,6 +32,21 @@ combined$Name=as.character(combined$Name)
 combined$Ticket=as.character(combined$Ticket)
 combined$Cabin=as.character(combined$Cabin)
 
+###################
+# Add new feature
+###################
+
+combined$FamilySize <- combined$SibSp + combined$Parch + 1
+
+combined$Surname <- sapply(combined$Name, FUN=function(x) {strsplit(x, split='[,.]')[[1]][1]})
+combined$FamilyID <- paste(as.character(combined$FamilySize), combined$Surname, sep="")
+combined$FamilyID[combined$FamilySize <= 2] <- 'Small'
+
+combined$FamilyID2 <- combined$FamilyID
+combined$FamilyID2 <- as.character(combined$FamilyID2)
+combined$FamilyID2[combined$FamilySize <= 3] <- 'Small'
+combined$FamilyID2 <- factor(combined$FamilyID2)
+
 table.embarked = table(combined[combined$Embarked!="",]$Embarked)
 combined[combined$Embarked=="",]$Embarked = names(table.embarked)[which.max(table.embarked)]
 
@@ -43,13 +58,14 @@ train = combined[combined$PassengerId %in% train$PassengerId,]
 test = combined[combined$PassengerId %in% test$PassengerId,]
 
 formula = Survived ~ Pclass + Sex + Age + Fare + Embarked
+#formula = Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + FamilySize + FamilyID2
 
-forest = randomForest(formula, data=train, ntree=500, maxnodes=8)
+forest = randomForest(formula, data=train, ntree=5000, maxnodes=8)
 test$Survived = predict(forest, newdata=test)
 
 dict = c('Age'=0,'Embarked'=0,'Fare'=0,'Parch'=0,'Pclass'=0,'Sex'=0,'SibSp'=0)
 
-for (i in 1:500) {
+for (i in 1:5000) {
   tree = getTree(forest, i, labelVar=TRUE)
   label=tree[1,][,3]
   dict[label]=dict[label]+1

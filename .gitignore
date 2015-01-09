@@ -1,5 +1,6 @@
 *py[co]
 *.csv
+*.tsv
 
 # data
 *.zip
