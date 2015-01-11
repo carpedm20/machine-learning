@@ -1,25 +1,13 @@
-import re
 import numpy as np
 import pandas as pd
-from bs4 import BeautifulSoup
-from nltk.corpus import stopwords
 import sys
+
+from utils import *
 
 BoW_COUNT = int(sys.argv[1])
 
 train = pd.read_csv("./data/labeledTrainData.tsv", header=0, \
                     delimiter="\t", quoting=3)
-
-def review_to_words(review):
-    review_text = BeautifulSoup(review).get_text()
-    letters_only = re.sub("[^a-zA-Z]"," ", review_text)
-
-    words = letters_only.lower().split()
-
-    stops = set(stopwords.words("english"))
-    meaningful_words = [w for w in words if not w in stops] 
-
-    return (" ".join(meaningful_words))
 
 clean_review = review_to_words(train["review"][0])
 

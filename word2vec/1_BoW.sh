@@ -1,7 +1,7 @@
 #!/bin/sh
 
-for i in 3000 4000 5000 6000
+for i in 7000 8000 9000
 do
   echo $i
-  python 0_read_data.py $i
+  python 0_BoW.py $i
 done
